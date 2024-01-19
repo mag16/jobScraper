@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Results</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    h2 {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Job Results</h1>
+
+  <div id="linkedinResults">
+    <h2>LinkedIn Jobs</h2>
+  </div>
+
+  <div id="indeedResults">
+    <h2>Indeed Jobs</h2>
+  </div>
+
+  <script>
+    fetch('job_results.json')
+      .then(response => response.json())
+      .then(data => {
+        const linkedInResultsDiv = document.getElementById('linkedinResults');
+        const indeedResultsDiv = document.getElementById('indeedResults');
+
+        // Filter jobs that are less than two weeks old
+        const filteredData = data.filter(job => Date.now() - job.timestamp <= 2 * 7 * 24 * 60 * 60 * 1000);
+
+        const linkedInData = filteredData.filter(job => job.url.includes('linkedin.com'));
+        const indeedData = filteredData.filter(job => job.url.includes('indeed.com'));
+
+        displayJobs(linkedInResultsDiv, linkedInData, 'LinkedIn Jobs');
+        displayJobs(indeedResultsDiv, indeedData, 'Indeed Jobs');
+      })
+      .catch(error => console.error('Error fetching job results:', error));
+
+    function displayJobs(container, data, title) {
+      if (data.length === 0) {
+        container.innerHTML = `<p>No ${title} found.</p>`;
+      } else {
+        const table = document.createElement('table');
+        const headerRow = document.createElement('tr');
+
+        // Create table headers
+        Object.keys(data[0]).forEach(key => {
+          const th = document.createElement('th');
+          th.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+          headerRow.appendChild(th);
+        });
+
+        table.appendChild(headerRow);
+
+        // Create table rows
+        data.forEach(job => {
+          const row = document.createElement('tr');
+
+          Object.values(job).forEach(value => {
+            const td = document.createElement('td');
+            if (typeof value === 'string' && value.startsWith('http')) {
+              // If the value is a URL, create a link
+              const link = document.createElement('a');
+              link.href = value;
+              link.textContent = 'View Job';
+              link.target = '_blank'; // Open the link in a new tab
+              td.appendChild(link);
+            } else {
+              td.textContent = value;
+            }
+            row.appendChild(td);
+          });
+
+          table.appendChild(row);
+        });
+
+        container.appendChild(table);
+      }
+    }
+  </script>
+
+</body>
+</html>
